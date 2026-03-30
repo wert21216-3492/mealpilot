@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MealPilot</title>
+
+<style>
+body { font-family: -apple-system; padding: 15px; background:#f2f2f2; }
+h1 { text-align:center; }
+.card { background:white; padding:15px; margin:10px 0; border-radius:12px; }
+button { padding:12px; width:100%; border:none; border-radius:10px; background:#4CAF50; color:white; font-size:16px; }
+input, textarea { width:100%; padding:10px; margin:5px 0; border-radius:8px; border:1px solid #ccc; }
+.meal { margin-bottom:10px; padding:10px; background:#fafafa; border-radius:8px; }
+</style>
+</head>
+
+<body>
+
+<h1>🍽 MealPilot</h1>
+
+<div class="card">
+<h2>Add Meal</h2>
+<input id="mealName" placeholder="Meal name">
+<textarea id="ingredients" placeholder="Ingredients (comma separated)"></textarea>
+<textarea id="steps" placeholder="Steps (one per line)"></textarea>
+<input id="calories" placeholder="Calories">
+<button id="addMealBtn">Add Meal</button>
+</div>
+
+<div class="card">
+<h2>Meals</h2>
+<div id="mealList"></div>
+</div>
+
+<div class="card">
+<h2>Weekly Plan</h2>
+<button id="randomizeBtn">Randomize Week</button>
+<div id="weekPlan"></div>
+</div>
+
+<div class="card">
+<h2>Grocery List</h2>
+<button id="groceryBtn">Generate Grocery List</button>
+<div id="groceryList"></div>
+</div>
+
+<script>
+let meals = JSON.parse(localStorage.getItem("meals")) || [];
+let week = JSON.parse(localStorage.getItem("week")) || [];
+
+function saveMeals() {
+localStorage.setItem("meals", JSON.stringify(meals));
+}
+
+function saveWeek() {
+localStorage.setItem("week", JSON.stringify(week));
+}
+
+function addMeal() {
+let name = document.getElementById("mealName").value;
+if (!name) return alert("Enter a meal name");
+
+let meal = {
+name,
+ingredients: document.getElementById("ingredients").value.split(","),
+steps: document.getElementById("steps").value.split("\n"),
+calories: document.getElementById("calories").value
+};
+
+meals.push(meal);
+saveMeals();
+displayMeals();
+}
+
+function displayMeals() {
+let list = document.getElementById("mealList");
+list.innerHTML = "";
+
+meals.forEach((m,i)=>{
+let div = document.createElement("div");
+div.className = "meal";
+
+div.innerHTML = `
+<strong>${m.name}</strong><br>
+Calories: ${m.calories}<br>
+`;
+
+let cookBtn = document.createElement("button");
+cookBtn.innerText = "Cook";
+cookBtn.onclick = () => cookMeal(i);
+
+div.appendChild(cookBtn);
+list.appendChild(div);
+});
+}
+
+function randomizeWeek() {
+if (meals.length === 0) return alert("Add meals first");
+
+week = [];
+
+for(let i=0;i<7;i++){
+let random = meals[Math.floor(Math.random()*meals.length)];
+week.push(random);
+}
+
+saveWeek();
+displayWeek();
+}
+
+function displayWeek() {
+let div = document.getElementById("weekPlan");
+div.innerHTML = "";
+
+week.forEach((m,i)=>{
+div.innerHTML += `<div>Day ${i+1}: ${m.name}</div>`;
+});
+}
+
+function generateGrocery() {
+if (week.length === 0) return alert("Generate week first");
+
+let all = [];
+
+week.forEach(m=>{
+all = all.concat(m.ingredients);
+});
+
+let unique = [...new Set(all.map(i => i.trim()))];
+
+document.getElementById("groceryList").innerHTML =
+unique.join("<br>");
+}
+
+function cookMeal(index) {
+let meal = meals[index];
+let i = 0;
+
+function nextStep() {
+if(i < meal.steps.length){
+alert(meal.steps[i]);
+i++;
+setTimeout(nextStep, 3000);
+}
+}
+
+nextStep();
+}
+
+// BUTTON HOOKS (this fixes your issue)
+document.getElementById("addMealBtn").addEventListener("click", addMeal);
+document.getElementById("randomizeBtn").addEventListener("click", randomizeWeek);
+document.getElementById("groceryBtn").addEventListener("click", generateGrocery);
+
+// LOAD DATA
+displayMeals();
+displayWeek();
+</script>
+
+</body>
+</html>
